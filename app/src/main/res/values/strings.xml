@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Con Aria</string>
+    <!-- INCOLLA QUI l'URL della tua web app Apps Script (quello che finisce con /exec) -->
+    <string name="web_app_url">https://script.google.com/macros/s/AKfycbzGjI_I1EHrcDxte_BQ3_FiYyixYaMkTrJO7GjkX8zxBmuDbbL39zJ2A4aRwQpAKXrCOg/exec</string>
+</resources>
