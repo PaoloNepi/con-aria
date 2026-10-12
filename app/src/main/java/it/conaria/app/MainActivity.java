@@ -3,7 +3,6 @@ package it.conaria.app;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -21,6 +20,15 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private SwipeRefreshLayout refresh;
 
+    // Forza il riquadro di Apps Script a riempire lo schermo
+    private static final String FIX_JS =
+        "(function(){"
+        + "var s=document.createElement('style');"
+        + "s.innerHTML='html,body{height:100%!important;margin:0!important}"
+        + "iframe{width:100%!important;height:calc(100vh - 44px)!important;border:0!important}';"
+        + "document.head.appendChild(s);"
+        + "})();";
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,20 +36,22 @@ public class MainActivity extends AppCompatActivity {
 
         refresh = new SwipeRefreshLayout(this);
         webView = new WebView(this);
-        refresh.addView(webView);
+        refresh.addView(webView, new SwipeRefreshLayout.LayoutParams(
+                SwipeRefreshLayout.LayoutParams.MATCH_PARENT,
+                SwipeRefreshLayout.LayoutParams.MATCH_PARENT));
         setContentView(refresh);
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
+        s.setUseWideViewPort(false);
+        s.setLoadWithOverviewMode(false);
+        s.setSupportZoom(false);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
                 String host = r.getUrl().getHost() == null ? "" : r.getUrl().getHost();
-                // Resta nell'app per Google (Apps Script) e CDN usate dalla pagina
                 if (host.endsWith("google.com") || host.endsWith("googleusercontent.com")
                         || host.endsWith("jsdelivr.net") || host.endsWith("gstatic.com")) {
                     return false;
@@ -58,10 +68,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView v, String url) {
                 refresh.setRefreshing(false);
+                v.evaluateJavascript(FIX_JS, null);
             }
         });
 
-        // alert() e confirm() usati dalla pagina
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onJsAlert(WebView v, String url, String msg, JsResult result) {
@@ -85,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Il "tira per ricaricare" funziona solo quando la pagina è in cima
+        refresh.setOnChildScrollUpCallback((parent, child) -> webView.getScrollY() > 0);
         refresh.setOnRefreshListener(() -> webView.reload());
 
         if (savedInstanceState != null) {
