@@ -2,7 +2,6 @@ package it.conaria.app;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -13,12 +12,10 @@ import android.webkit.WebViewClient;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
-    private SwipeRefreshLayout refresh;
 
     // Forza il riquadro di Apps Script a riempire lo schermo
     private static final String FIX_JS =
@@ -34,12 +31,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        refresh = new SwipeRefreshLayout(this);
+        // Nessun "tira per ricaricare": la pagina scorre normalmente
         webView = new WebView(this);
-        refresh.addView(webView, new SwipeRefreshLayout.LayoutParams(
-                SwipeRefreshLayout.LayoutParams.MATCH_PARENT,
-                SwipeRefreshLayout.LayoutParams.MATCH_PARENT));
-        setContentView(refresh);
+        setContentView(webView);
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -61,13 +55,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onPageStarted(WebView v, String url, Bitmap favicon) {
-                refresh.setRefreshing(true);
-            }
-
-            @Override
             public void onPageFinished(WebView v, String url) {
-                refresh.setRefreshing(false);
                 v.evaluateJavascript(FIX_JS, null);
             }
         });
@@ -94,10 +82,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
-        // Il "tira per ricaricare" funziona solo quando la pagina è in cima
-        refresh.setOnChildScrollUpCallback((parent, child) -> webView.getScrollY() > 0);
-        refresh.setOnRefreshListener(() -> webView.reload());
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
